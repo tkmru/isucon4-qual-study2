@@ -3,6 +3,8 @@ require 'digest/sha2'
 require 'mysql2-cs-bind'
 require 'rack-flash'
 require 'json'
+require 'rack-lineprof'
+require 'logger'
 
 module Isucon4
   class App < Sinatra::Base
