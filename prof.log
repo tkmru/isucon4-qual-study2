@@ -1,1 +1,2075 @@
 # Logfile created on 2018-09-10 14:21:50 +0000 by logger.rb/44203
+D, [2018-09-11T17:59:14.392633 #3350] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T17:59:14.399155 #3341] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   4.3ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T17:59:14.504721 #3341] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T17:59:14.515295 #3341] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T17:59:14.522454 #3341] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T17:59:14.527842 #3323] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T17:59:15.130612 #3335] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T17:59:54.986185 #3344] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.9ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:00:41.565982 #3326] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   4.2ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.4ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  35.1ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[31m 142.6ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[33m  28.7ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[31m 142.6ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  35.1ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.4ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m 207.7ms     1 |  148      post '/login' do
+[0m[31m 207.1ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.4ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:00:41.595673 #3326] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.7ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:00:55.800112 #3338] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.2ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  34.2ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.6ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.7ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.7ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  34.3ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  71  
+[0m[90m               |  72          if user && calculate_password_hash(password, user['salt']) == user['password_hash']
+[0m[37m   0.4ms     1 |  73            login_log(true, login, user['id'])
+[0m[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  84.7ms     1 |  148      post '/login' do
+[0m[31m  84.1ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[37m   0.4ms     2 |  151          session[:user_id] = user['id']
+[0m[90m               |  152          redirect '/mypage'
+[0m[90m               |  153        else
+[0m
+
+D, [2018-09-11T18:00:55.924761 #3338] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  86          return nil unless session[:user_id]
+[0m[90m               |  87  
+[0m[37m   0.3ms     7 |  88          @current_user = db.xquery('SELECT * FROM users WHERE id = ?', session[:user_id].to_i).first
+[0m[90m               |  89          unless @current_user
+[0m[90m               |  90            session[:user_id] = nil
+[0m[90m              .......[0m
+[90m               |  98          return nil unless current_user
+[0m[90m               |  99  
+[0m[31m  94.9ms    24 |  100          db.xquery('SELECT * FROM login_log WHERE succeeded = 1 AND user_id = ? ORDER BY id DESC LIMIT 2', current_user['id']).each.last
+[0m[90m               |  101        end
+[0m[90m               |  102  
+[0m[90m              .......[0m
+[90m               |  165  
+[0m[90m               |  166      get '/mypage' do
+[0m[37m   0.5ms     1 |  167        unless current_user
+[0m[90m               |  168          flash[:notice] = "You must be logged in"
+[0m[90m               |  169          redirect '/'
+[0m[90m               |  170        end
+[0m[31m  98.1ms     1 |  171        erb :mypage, layout: :base
+[0m[90m               |  172      end
+[0m[90m               |  173  
+[0m
+
+D, [2018-09-11T18:01:16.770386 #3332] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.1ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:01:22.852705 #3341] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.7ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:01:26.507773 #3323] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.4ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  84        def current_user
+[0m[90m               |  85          return @current_user if @current_user
+[0m[37m   0.3ms     2 |  86          return nil unless session[:user_id]
+[0m[90m               |  87  
+[0m[37m   2.9ms     7 |  88          @current_user = db.xquery('SELECT * FROM users WHERE id = ?', session[:user_id].to_i).first
+[0m[90m               |  89          unless @current_user
+[0m[90m               |  90            session[:user_id] = nil
+[0m[90m              .......[0m
+[90m               |  98          return nil unless current_user
+[0m[90m               |  99  
+[0m[31m 100.3ms    24 |  100          db.xquery('SELECT * FROM login_log WHERE succeeded = 1 AND user_id = ? ORDER BY id DESC LIMIT 2', current_user['id']).each.last
+[0m[90m               |  101        end
+[0m[90m               |  102  
+[0m[90m              .......[0m
+[90m               |  165  
+[0m[90m               |  166      get '/mypage' do
+[0m[37m   3.3ms     1 |  167        unless current_user
+[0m[90m               |  168          flash[:notice] = "You must be logged in"
+[0m[90m               |  169          redirect '/'
+[0m[90m               |  170        end
+[0m[31m 103.4ms     1 |  171        erb :mypage, layout: :base
+[0m[90m               |  172      end
+[0m[90m               |  173  
+[0m
+
+D, [2018-09-11T18:01:29.132887 #3326] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.7ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:17.721270 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.8ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:17.725570 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.726695 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.740678 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.740678 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.837179 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.2ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.8ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  49.7ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.7ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  49.8ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.8ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.4ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  87.5ms     1 |  148      post '/login' do
+[0m[31m  86.9ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.4ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:17.844064 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.0ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:17.847702 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.850372 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.853567 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.859562 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.866783 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.1ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:17.870346 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.873287 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.883941 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.885037 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.978515 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.1ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  35.4ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.5ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.5ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.6ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  35.4ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.4ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  85.7ms     1 |  148      post '/login' do
+[0m[31m  85.1ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.4ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:17.985082 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.8ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:17.987977 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.987989 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.988066 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:17.999135 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.008344 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.8ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.010997 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.012811 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.020908 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.022651 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.115210 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.2ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.9ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.3ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.7ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.3ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.9ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  84.0ms     1 |  148      post '/login' do
+[0m[31m  83.4ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.3ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:18.121758 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.9ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.123999 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.124166 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.126966 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.127222 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.135417 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.7ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.138394 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.138502 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.138601 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.138615 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.227983 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.5ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.4ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.0ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.4ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.5ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  71  
+[0m[90m               |  72          if user && calculate_password_hash(password, user['salt']) == user['password_hash']
+[0m[37m   0.3ms     1 |  73            login_log(true, login, user['id'])
+[0m[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  82.7ms     1 |  148      post '/login' do
+[0m[31m  82.4ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[37m   0.2ms     2 |  151          session[:user_id] = user['id']
+[0m[90m               |  152          redirect '/mypage'
+[0m[90m               |  153        else
+[0m
+
+D, [2018-09-11T18:27:18.325024 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  86          return nil unless session[:user_id]
+[0m[90m               |  87  
+[0m[37m   0.2ms     7 |  88          @current_user = db.xquery('SELECT * FROM users WHERE id = ?', session[:user_id].to_i).first
+[0m[90m               |  89          unless @current_user
+[0m[90m               |  90            session[:user_id] = nil
+[0m[90m              .......[0m
+[90m               |  98          return nil unless current_user
+[0m[90m               |  99  
+[0m[31m  91.4ms    24 |  100          db.xquery('SELECT * FROM login_log WHERE succeeded = 1 AND user_id = ? ORDER BY id DESC LIMIT 2', current_user['id']).each.last
+[0m[90m               |  101        end
+[0m[90m               |  102  
+[0m[90m              .......[0m
+[90m               |  165  
+[0m[90m               |  166      get '/mypage' do
+[0m[37m   0.4ms     1 |  167        unless current_user
+[0m[90m               |  168          flash[:notice] = "You must be logged in"
+[0m[90m               |  169          redirect '/'
+[0m[90m               |  170        end
+[0m[31m  93.7ms     1 |  171        erb :mypage, layout: :base
+[0m[90m               |  172      end
+[0m[90m               |  173  
+[0m
+
+D, [2018-09-11T18:27:18.327084 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.330295 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.330992 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.330992 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.340055 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.2ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.342267 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.343844 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.344175 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.355060 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.448045 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.2ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  34.3ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.4ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.6ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.5ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  34.3ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  84.6ms     1 |  148      post '/login' do
+[0m[31m  83.9ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.4ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:18.455533 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.9ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.458010 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.458015 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.461072 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.461365 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.472119 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.8ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.474676 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.474914 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.474918 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.475072 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.570659 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.1ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  38.5ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.4ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.6ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.4ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  38.5ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.4ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  88.5ms     1 |  148      post '/login' do
+[0m[31m  88.0ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.3ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:18.576769 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.8ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.579608 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.579604 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.582345 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.582357 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.591962 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.9ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.594592 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.594714 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.594830 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.594867 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.687234 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.2ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.7ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.4ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.6ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.4ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.8ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  83.8ms     1 |  148      post '/login' do
+[0m[31m  83.2ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.3ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:18.693977 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.0ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.696650 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.696651 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.698677 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.698802 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.707477 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.8ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.710018 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.710063 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.710953 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.712068 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.804593 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.1ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.8ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.2ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.5ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.2ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.9ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  83.7ms     1 |  148      post '/login' do
+[0m[31m  83.1ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.4ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:18.811432 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.9ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.814350 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.814618 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.814797 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.814822 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.823389 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.6ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.825782 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.826002 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.826465 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.827251 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.915616 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  34.1ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.1ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   0.4ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.2ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  34.2ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  81.5ms     1 |  148      post '/login' do
+[0m[31m  81.1ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.2ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:18.922702 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.9ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.924990 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.926693 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.927172 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.927617 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.937189 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.7ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:18.940069 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.940211 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.940320 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:18.940546 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.029574 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.2ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.8ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.2ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   0.4ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.3ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.9ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  81.3ms     1 |  148      post '/login' do
+[0m[31m  80.9ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.2ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:19.035667 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.7ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.038406 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.038644 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.042271 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.042326 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.051758 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.8ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.054364 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.054501 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.054843 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.054870 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.147199 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  23  
+[0m[90m               |  24        def db
+[0m[37m   2.2ms    11 |  25          Thread.current[:isu4_db] ||= Mysql2::Client.new(
+[0m[90m               |  26            host: ENV['ISU4_DB_HOST'] || 'localhost',
+[0m[90m               |  27            port: ENV['ISU4_DB_PORT'] ? ENV['ISU4_DB_PORT'].to_i : nil,
+[0m[90m              .......[0m
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.9ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.4ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   2.6ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.5ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.9ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  71  
+[0m[90m               |  72          if user && calculate_password_hash(password, user['salt']) == user['password_hash']
+[0m[37m   0.3ms     1 |  73            login_log(true, login, user['id'])
+[0m[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  83.9ms     1 |  148      post '/login' do
+[0m[31m  83.5ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[37m   0.3ms     2 |  151          session[:user_id] = user['id']
+[0m[90m               |  152          redirect '/mypage'
+[0m[90m               |  153        else
+[0m
+
+D, [2018-09-11T18:27:19.249768 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  84        def current_user
+[0m[90m               |  85          return @current_user if @current_user
+[0m[37m   0.2ms     2 |  86          return nil unless session[:user_id]
+[0m[90m               |  87  
+[0m[37m   0.3ms     7 |  88          @current_user = db.xquery('SELECT * FROM users WHERE id = ?', session[:user_id].to_i).first
+[0m[90m               |  89          unless @current_user
+[0m[90m               |  90            session[:user_id] = nil
+[0m[90m              .......[0m
+[90m               |  98          return nil unless current_user
+[0m[90m               |  99  
+[0m[31m  95.2ms    24 |  100          db.xquery('SELECT * FROM login_log WHERE succeeded = 1 AND user_id = ? ORDER BY id DESC LIMIT 2', current_user['id']).each.last
+[0m[90m               |  101        end
+[0m[90m               |  102  
+[0m[90m              .......[0m
+[90m               |  165  
+[0m[90m               |  166      get '/mypage' do
+[0m[37m   0.5ms     1 |  167        unless current_user
+[0m[90m               |  168          flash[:notice] = "You must be logged in"
+[0m[90m               |  169          redirect '/'
+[0m[90m               |  170        end
+[0m[31m  98.1ms     1 |  171        erb :mypage, layout: :base
+[0m[90m               |  172      end
+[0m[90m               |  173  
+[0m
+
+D, [2018-09-11T18:27:19.252502 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.252577 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.252620 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.252724 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.262935 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.0ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.265586 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.265618 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.265834 #3508] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.265963 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.354067 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.2ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  33.8ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  45.9ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   0.3ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.0ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  33.8ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  80.7ms     1 |  148      post '/login' do
+[0m[31m  80.4ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.2ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:19.362349 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   4.9ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.365031 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.365168 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.365233 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.365497 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.375830 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.1ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.378060 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.378641 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.378927 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.380270 #3505] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.470760 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  34.3ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.4ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   0.4ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.4ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  34.4ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.4ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  82.1ms     1 |  148      post '/login' do
+[0m[31m  81.7ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.3ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:19.476517 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.6ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.478747 #3502] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.479240 #3511] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.479581 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.482500 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.491218 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.3ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.493676 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.494934 #3529] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.494947 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.497278 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.584530 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  34.3ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.3ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   0.4ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.3ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  34.3ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  81.8ms     1 |  148      post '/login' do
+[0m[31m  81.5ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.2ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
+D, [2018-09-11T18:27:19.590337 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   2.5ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.592503 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.592733 #3523] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.594523 #3520] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.595240 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.605712 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  143  
+[0m[90m               |  144      get '/' do
+[0m[37m   3.0ms     1 |  145        erb :index, layout: :base
+[0m[90m               |  146      end
+[0m[90m               |  147  
+[0m
+
+D, [2018-09-11T18:27:19.608070 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.610670 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.610673 #3514] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.611185 #3517] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+
+
+D, [2018-09-11T18:27:19.698985 #3526] DEBUG -- : [34m
+[Rack::Lineprof] ===============================================================[0m
+
+app.rb
+[90m               |  38  
+[0m[90m               |  39        def login_log(succeeded, login, user_id = nil)
+[0m[37m   0.3ms     2 |  40          db.xquery("INSERT INTO login_log" \
+[0m[90m               |  41                    " (`created_at`, `user_id`, `login`, `ip`, `succeeded`)" \
+[0m[90m               |  42                    " VALUES (?,?,?,?,?)",
+[0m[90m              .......[0m
+[90m               |  46        def user_locked?(user)
+[0m[90m               |  47          return nil unless user
+[0m[33m  34.1ms     4 |  48          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE user_id = ? AND id > IFNULL((select id from login_log where user_id = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", user['id'], user['id']).first
+[0m[90m               |  49  
+[0m[90m               |  50          config[:user_lock_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  52  
+[0m[90m               |  53        def ip_banned?
+[0m[33m  46.1ms     6 |  54          log = db.xquery("SELECT COUNT(1) AS failures FROM login_log WHERE ip = ? AND id > IFNULL((select id from login_log where ip = ? AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);", request.ip, request.ip).first
+[0m[90m               |  55  
+[0m[90m               |  56          config[:ip_ban_threshold] <= log['failures']
+[0m[90m              .......[0m
+[90m               |  58  
+[0m[90m               |  59        def attempt_login(login, password)
+[0m[37m   0.4ms     4 |  60          user = db.xquery('SELECT * FROM users WHERE login = ?', login).first
+[0m[90m               |  61  
+[0m[33m  46.1ms     1 |  62          if ip_banned?
+[0m[90m               |  63            login_log(false, login, user ? user['id'] : nil)
+[0m[90m               |  64            return [nil, :banned]
+[0m[90m               |  65          end
+[0m[90m               |  66  
+[0m[33m  34.1ms     1 |  67          if user_locked?(user)
+[0m[90m               |  68            login_log(false, login, user['id'])
+[0m[90m               |  69            return [nil, :locked]
+[0m[90m              .......[0m
+[90m               |  74            [user, nil]
+[0m[90m               |  75          elsif user
+[0m[37m   0.3ms     1 |  76            login_log(false, login, user['id'])
+[0m[90m               |  77            [nil, :wrong_password]
+[0m[90m               |  78          else
+[0m[90m              .......[0m
+[90m               |  146      end
+[0m[90m               |  147  
+[0m[31m  81.4ms     1 |  148      post '/login' do
+[0m[31m  81.0ms     3 |  149        user, err = attempt_login(params[:login], params[:password])
+[0m[90m               |  150        if user
+[0m[90m               |  151          session[:user_id] = user['id']
+[0m[90m              .......[0m
+[90m               |  158            flash[:notice] = "You're banned."
+[0m[90m               |  159          else
+[0m[37m   0.2ms     2 |  160            flash[:notice] = "Wrong username or password"
+[0m[90m               |  161          end
+[0m[90m               |  162          redirect '/'
+[0m
+
