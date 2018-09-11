@@ -3,12 +3,12 @@ require 'digest/sha2'
 require 'mysql2-cs-bind'
 require 'rack-flash'
 require 'json'
-require 'rack-lineprof'
-require 'logger'
+#require 'rack-lineprof'
+#require 'logger'
 
 module Isucon4
   class App < Sinatra::Base
-    use Rack::Lineprof, logger: Logger.new(File.expand_path(File.dirname(__FILE__) + '/prof.log')), profile: 'app.rb'
+    #use Rack::Lineprof, logger: Logger.new(File.expand_path(File.dirname(__FILE__) + '/prof.log')), profile: 'app.rb'
     use Rack::Session::Cookie, secret: ENV['ISU4_SESSION_SECRET'] || 'shirokane'
     use Rack::Flash
     set :public_folder, File.expand_path('../../public', __FILE__)
